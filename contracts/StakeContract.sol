@@ -28,8 +28,8 @@ contract StakeContract {
   function createStake(
     address[] memory addresses,
     StakeFrequency frequency,
-    uint256 end,
-    uint256 frequencyAmount
+    uint256 frequencyAmount,
+    uint256 end
   ) external payable returns (uint256) {
     // id for stake
     uint256 id = generateId();
@@ -53,5 +53,20 @@ contract StakeContract {
 
   function getStakeInfo(uint256 id) external view returns (StakeInfo memory) {
     return _stakes[id];
+  }
+
+  function getAddressesByStakeId(uint256 id) external view returns(address[] memory){
+    return _map_StakeId_Addresses[id];
+  }
+
+  function getStakesByAddress(address adr) external view returns(StakeInfo[] memory){
+    uint256[] memory ids = _map_Address_StakeIds[adr];
+    StakeInfo[] memory infos;
+    
+    for (uint256 index = 0; index < ids.length; index++) {
+      infos[index] = _stakes[ids[index]];
+    }
+
+    return infos;
   }
 }
