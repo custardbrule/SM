@@ -1,17 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+import "openzeppelin-solidity/contracts/utils/Address.sol";
+
 import "./StakeStruct.sol";
 import "./StakeEnum.sol";
 
-contract StakeContract {
+contract StakeContract is Address {
   address public owner;
   uint256 private _stakeNumber;
   uint256 private _counter;
 
-  StakeInfo[] private _stakes;
+  // StakeInfo[] private _stakes;
+  mapping(uint256 => StakeInfo) private _stakes;
   mapping(uint256 => address[]) private _map_StakeId_Addresses;
   mapping(address => uint256[]) private _map_Address_StakeIds;
+  mapping(address => mapping(uint256 => uint256))
+    private _map_last_deposit_on_stake; // address => StakeId => unix time
 
   constructor() {
     owner = msg.sender;
@@ -42,11 +47,16 @@ contract StakeContract {
     }
 
     _stakeNumber++;
-    _stakes[_stakeNumber].id = id;
-    _stakes[_stakeNumber].frequency = frequency;
-    _stakes[_stakeNumber].frequencyAmount = frequencyAmount;
-    _stakes[_stakeNumber].start = block.timestamp;
-    _stakes[_stakeNumber].end = end;
+
+    StakeInfo memory info;
+
+    info.id = id;
+    info.frequency = frequency;
+    info.frequencyAmount = frequencyAmount;
+    info.start = block.timestamp;
+    info.end = end;
+
+    _stakes[id] = info;
 
     return id;
   }
@@ -55,18 +65,39 @@ contract StakeContract {
     return _stakes[id];
   }
 
-  function getAddressesByStakeId(uint256 id) external view returns(address[] memory){
+  function getAddressesByStakeId(
+    uint256 id
+  ) external view returns (address[] memory) {
     return _map_StakeId_Addresses[id];
   }
 
-  function getStakesByAddress(address adr) external view returns(StakeInfo[] memory){
+  function getStakesByAddress(
+    address adr
+  ) external view returns (StakeInfo[] memory) {
     uint256[] memory ids = _map_Address_StakeIds[adr];
     StakeInfo[] memory infos;
-    
+
     for (uint256 index = 0; index < ids.length; index++) {
       infos[index] = _stakes[ids[index]];
     }
 
     return infos;
+  }
+
+  function depositStake(
+    uint256 stakeId
+  ) public payable returns (StakeHistory memory) {
+    uint256 val = msg.value;
+    uint256 requireAmount = _stakes[stakeId].frequencyAmount;
+
+    require(val == requireAmount, "Value must be equal to requireAmount");
+
+    StakeHistory memory history;
+
+    history.date = block.timestamp;
+    history.amount = val;
+    _stakes[stakeId].histories.push(history);
+
+    return history;
   }
 }
