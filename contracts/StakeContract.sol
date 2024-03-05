@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "openzeppelin-solidity/contracts/utils/Address.sol";
-
 import "./StakeStruct.sol";
 import "./StakeEnum.sol";
 
-contract StakeContract is Address {
+contract StakeContract {
   address public owner;
   uint256 private _stakeNumber;
   uint256 private _counter;
 
-  // StakeInfo[] private _stakes;
   mapping(uint256 => StakeInfo) private _stakes;
+  mapping(uint256 => StakeHistory[]) private _stakeId_histories;
   mapping(uint256 => address[]) private _map_StakeId_Addresses;
   mapping(address => uint256[]) private _map_Address_StakeIds;
   mapping(address => mapping(uint256 => uint256))
@@ -84,6 +82,10 @@ contract StakeContract is Address {
     return infos;
   }
 
+  function getHistoryById(uint256 id) public view returns(StakeHistory[] memory){
+    return _stakeId_histories[id];
+  }
+
   function depositStake(
     uint256 stakeId
   ) public payable returns (StakeHistory memory) {
@@ -96,7 +98,7 @@ contract StakeContract is Address {
 
     history.date = block.timestamp;
     history.amount = val;
-    _stakes[stakeId].histories.push(history);
+    _stakeId_histories[stakeId].push(history);
 
     return history;
   }

@@ -14,5 +14,4 @@ struct StakeInfo {
   uint256 end;
   StakeFrequency frequency;
   uint256 frequencyAmount; // in gwei
-  StakeHistory[] histories;
 }
